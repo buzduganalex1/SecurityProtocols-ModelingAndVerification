@@ -1,0 +1,14 @@
+%% TestSecurityProtocol
+
+role alice ()
+    transition
+end role
+
+role bob ()
+    transition
+end role
+
+role environment() def=
+ end role
+
+environment()
