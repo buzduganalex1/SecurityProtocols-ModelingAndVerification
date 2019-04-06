@@ -1,0 +1,137 @@
+%% Needham-Schroeder Public-Key Protocol with key server
+
+% Role of the initiator:
+role alice (A, B: agent,             
+            Ka, Ks: public_key,  
+            KeyRing: (agent.public_key) set,
+            Snd, Rcv: channel(dy))
+played_by A def=
+
+  local State : nat,
+        Na, Nb: text,
+        Kb: public_key
+
+  init State := 0
+
+  transition
+
+   % Start, if alice must request bob's public key from key server
+   ask.    State  = 0 /\ Rcv(start) /\ not(in(B.Kb', KeyRing))
+       =|> State':= 1 /\ Snd(A.B)
+
+   % Receipt of response from key server
+   learn.  State  = 1 /\ Rcv({B.Kb'}_inv(Ks))
+       =|> State':= 2 /\ KeyRing':=cons(B.Kb', KeyRing)
+                                /\ Na':=new() /\ Snd({Na'.A}_Kb')
+	              /\ secret(Na',sna,{A,B})
+	             
+
+   knows. State  = 0 /\ Rcv(start) /\ in(B.Kb', KeyRing)
+       =|> State':= 2 /\ Na':=new() /\ Snd({Na'.A}_Kb')
+	              /\ secret(Na',sna,{A,B})
+	            
+
+   cont.   State  = 2 /\ Rcv({Na.Nb'}_Ka) 
+       =|> State':= 3 /\ Snd({Nb'}_Kb)
+	              /\ request(A,B,alice_bob_nb,Nb')
+
+end role
+
+% Role of the receiver:
+role bob(A, B: agent,      
+         Kb, Ks: public_key,  
+         KeyRing: (agent.public_key) set,
+         Snd, Rcv: channel(dy))
+played_by B def=
+
+  local State: nat,
+        Na, Nb: text, 
+        Ka: public_key
+
+  init State := 0
+
+  transition 
+
+   % Start if bob must request alice's public key from key server
+   ask.    State  = 0 /\ Rcv({Na'.A}_Kb) /\ not(in(A.Ka', KeyRing))
+       =|> State':= 1 /\ Snd(B.A)
+
+   % Receipt of response from key server
+   learn.  State  = 1 /\ Rcv({A.Ka'}_inv(Ks))
+       =|> State':= 2 /\ KeyRing':=cons(A.Ka', KeyRing)
+	               /\ Nb':=new() /\ Snd({Na.Nb'}_Ka')
+	              /\ witness(B,A,alice_bob_nb,Nb')
+
+  knows.  State  = 0 /\ Rcv({Na'.A}_Kb) /\ in(A.Ka', KeyRing)
+       =|> State':= 2 /\ Nb':=new() /\ Snd({Na'.Nb'}_Ka')            
+	              /\ witness(B,A,alice_bob_nb,Nb')
+
+   cont.   State  = 2 /\ Rcv({Nb}_Kb) 
+       =|> State':= 3 
+
+end role
+
+% Role of the key server:
+role server(S: agent,
+            Ks: public_key,
+            KeyMap: (agent.public_key) set,
+            Snd, Rcv: channel(dy))
+played_by S def=
+
+  local X, Y: agent,
+          Ky: public_key
+
+  transition
+   req1.   Rcv(X'.Y') /\ in(Y'.Ky', KeyMap)
+       =|> Snd({Y'.Ky'}_inv(Ks))
+
+end role
+
+% Role representing a partial session between alice and bob:
+role nspk(A,B: agent, 
+	 Ka, Kb, Ks: public_key,
+	KeyMapA, KeyMapB: (agent.public_key) set,
+	Snd, Rcv: channel(dy))
+def=
+  composition
+       alice(A,B,Ka,Ks,KeyMapA,Snd,Rcv)
+       /\ bob(A,B,Kb,Ks,KeyMapB,Snd,Rcv)
+
+end role
+
+% The main role:
+role environment() def=
+
+  local KeyMapS, KeyMapA, KeyMapB, KeyMapI: (agent.public_key) set,
+        Snd, Rcv: channel(dy)
+
+  const a, b, s, i: agent,
+        ka, kb, ki, ks: public_key,
+        sna, alice_bob_nb: protocol_id
+
+  init KeyMapS := {a.ka, b.kb, i.ki}
+     /\ KeyMapA := {a.ka, b.kb}
+     /\ KeyMapB := {b.kb}
+     /\ KeyMapI := {i.ki}
+
+  intruder_knowledge = {a, b, s, ks, ka, kb, ki, inv(ki)}
+
+  composition
+        server(s,ks, KeyMapS, Snd, Rcv)
+     /\ nspk(a,b,ka,kb,ks,KeyMapA,KeyMapB,Snd,Rcv)
+     /\ nspk(a,i,ka,ki,ks,KeyMapA,KeyMapI,Snd,Rcv)
+     /\ nspk(i,b,ki,kb,ks,KeyMapI,KeyMapB,Snd,Rcv)
+	    
+end role
+
+% Description of goal properties:
+goal
+
+  secrecy_of sna
+  authentication_on alice_bob_nb
+ 
+
+end goal
+
+% Call of the main role:
+environment()
