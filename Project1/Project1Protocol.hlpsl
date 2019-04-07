@@ -1,8 +1,7 @@
-%Security protocol used for change of keys
-% Message 1. A + S: A, B.
-% Message 2. S -+ A: (T,, L, Kb, B, ITS, L, &, AIK,,~JK~.
-% Message 3. A +B: IT,,& &~,A]K~~, M, Ta)~,,,.
-% Message 4. B -+A: (T= + lJKab. 
+% 1. A -> S: A,B
+% 2. S -> A: {Kab,B,{Kab,A}_Kbs}Kas
+% 3. A -> B: {Kab,A}_Kbs, {Na',A}_Kab
+% 4. B -> A: {Nb'.B}_Kab
 
 role alice (A,B,S : agent,
             K_AS : symmetric_key,
@@ -70,6 +69,7 @@ played_by S def=
     transition
      1. Rcv({A.B}_K_AS)
         =|> K_AB':=new() /\ Snd({K_AB'.B.{K_AB'.A}_K_BS}_K_AS)
+                         /\ secret(K_AB', skab, {A,B,S})
         
 end role
 
@@ -91,13 +91,12 @@ role environment() def=
     const a, b, s, i: agent,
           k_as, k_bs, k_is: symmetric_key,
           ki: public_key,
-          sna,snb,alice_bob_na, bob_alice_nb: protocol_id
+          sna,snb,alice_bob_na, skab,bob_alice_nb: protocol_id
 
-    intruder_knowledge = {a,b,s,i,k_as,k_bs,k_is,inv(ki)}
+    intruder_knowledge = {a,b,s,i,k_is,inv(ki)}
 
     composition
         securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) /\
-        securityProtocol(a,i,s,k_as,k_is,Snd,Rcv) /\    
         securityProtocol(i,b,s,k_is,k_bs,Snd,Rcv) 
 
 end role
@@ -105,7 +104,7 @@ end role
 goal
     authentication_on alice_bob_na,bob_alice_nb
     weak_authentication_on alice_bob_na,bob_alice_nb
-    secrecy_of sna,snb
+    secrecy_of sna,snb,skab
 end goal
 
 environment()
