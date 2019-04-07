@@ -44,7 +44,22 @@ Second attempt follows Nspk protocol using a server without timestamp and lifeti
 
 The points of interest are that Kab to be secret between A,B and Na' and Nb' to be safely communicated between parties using Kab.
 
-This version introduces the server but still has some issues like an replay attack since messages don't have a timestamp/lifetime.
+This version introduces the server but still has some issues like an replay attack since messages.
+
+This issue can be solved introducing timestamp like the kerberos protocol or by introducing nounces in the following way
+
+Third attemp : Adding a nounce 
+
+```
+1. A -> B: A
+2. B -> A: {A,Nb'})_Kbs
+3. A -> S: A,B,Na,{A,Nb'}_Kbs
+4. S -> A: {Na,Kab,B,{Kab,A,Nb'}Kbs}Kas
+5. A -> B: {Kab,A,Nb'}_Kbs, {Na',A}_Kab
+6. B -> A: {Nb'.B}_Kab
+```
+
+This version stops the replay attack since the attacker has to know the Nb' nounce.
 
 ## Referecens
 
