@@ -37,8 +37,11 @@ Second attempt follows Nspk protocol using a server without timestamp and lifeti
 
 ```
 1. A -> S: A,B
+
 2. S -> A: {Kab,B,{Kab,A}_Kbs}Kas
+
 3. A -> B: {Kab,A}_Kbs, {Na',A}_Kab
+
 4. B -> A: {Nb'.B}_Kab
 ```
 
@@ -48,14 +51,19 @@ This version introduces the server but still has some issues like an replay atta
 
 This issue can be solved introducing timestamp like the kerberos protocol or by introducing nounces in the following way
 
-Third attemp : Adding a nounce 
+Third attemp : Adding a nounce
 
 ```
 1. A -> B: A
+
 2. B -> A: {A,Nb'})_Kbs
+
 3. A -> S: A,B,Na,{A,Nb'}_Kbs
+
 4. S -> A: {Na,Kab,B,{Kab,A,Nb'}Kbs}Kas
+
 5. A -> B: {Kab,A,Nb'}_Kbs, {Na',A}_Kab
+
 6. B -> A: {Nb'.B}_Kab
 ```
 
