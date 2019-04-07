@@ -1,57 +1,79 @@
 %Security protocol used for change of keys
+% Message 1. A + S: A, B.
+% Message 2. S -+ A: (T,, L, Kb, B, ITS, L, &, AIK,,~JK~.
+% Message 3. A +B: IT,,& &~,A]K~~, M, Ta)~,,,.
+% Message 4. B -+A: (T= + lJKab. 
 
-role alice (A,B : agent,
-            Ka,Kb : public_key,
+role alice (A,B,S : agent,
+            K_AS : symmetric_key,
             Snd,Rcv : channel(dy)) 
         
 played_by A def=     
 
     local State: nat,
-          Na,Nb: text
-    
+          Na,Nb: text,
+          K_AB, K_BS:symmetric_key
+
     init State:=0
 
     transition
-        1. State = 0 /\ Rcv(start)
-            =|> State':=1 /\ Na':=new() 
-                          /\ Snd({Na'.A}_Kb)
-
-        2. State = 1 /\ Rcv({Nb'.B}_Ka)
-            =|> State':=2 /\ Snd({Nb'}_Kb)
-
+        1. State=0 /\ Rcv(start)
+            =|> State':=1 /\ Snd({A.B}_K_AS)
+        
+        2. State=1 /\ Rcv({K_AB'.B.{K_AB'.A}_K_BS}_K_AS)
+            =|> State':=2 /\ Snd({K_AB'.A}_K_BS)
+                          /\ Na':=new()
+                          /\ Snd({Na'.A}_K_AB')
+        
+        3. State=2 /\ Rcv({Nb'.B}_K_AB')
+            =|> State':=3 
 end role
 
-role bob (B,A : agent,
-        Kb,Ka : public_key,
-        Snd,Rcv : channel(dy)) 
+role bob (B,A: agent,
+          K_BS: symmetric_key,
+          Snd,Rcv: channel(dy)) 
 
 played_by B def=
 
-    local State : nat,
-          Na,Nb : text
+    local State: nat,
+          Na,Nb: text,
+          K_AB: symmetric_key
 
     init State:=0
 
     transition
-        1. State = 0 /\ Rcv({Na'.A}_Kb)
-            =|> State':=1 /\ Nb':=new()
-                          /\ Snd({Nb'.B}_Ka)
-        
-        2. State = 1 /\ Rcv({Nb}_Kb)
-            =|> State':=2
-
+        1. State=0 /\ Rcv({K_AB'.A}_K_BS)
+            =|> State':=1 
+            
+        2. State=1 /\ Rcv({Na'.A}_K_AB')
+            =|> State':=2  /\ Nb':=new()
+                           /\ Snd({Nb'.B}_K_AB')
+                           
 end role
 
-% role S
-% end role
+role server (S: agent,
+             K_AS,K_BS: symmetric_key,
+             Snd, Rcv: channel(dy))
+              
+played_by S def=
+    
+    local A,B : agent,
+          K_AB : symmetric_key
 
-role securityProtocol(A,B: agent,
-                      Ka,Kb: public_key,
+    transition
+     1. Rcv({A.B}_K_AS)
+        =|> K_AB':=new() /\ Snd({K_AB'.B.{K_AB'.A}_K_BS}_K_AS)
+        
+end role
+
+role securityProtocol(A,B,S: agent,
+                      K_AS,K_BS: symmetric_key,
                       Snd,Rcv : channel(dy)) def=
     
     composition
-        alice(A,B,Ka,Kb,Snd,Rcv) /\
-        bob(B,A,Kb,Ka,Snd,Rcv) 
+        server(S,K_AS,K_BS,Snd,Rcv) /\
+        alice(A,B,S,K_AS,Snd,Rcv) /\
+        bob(B,A,K_BS,Snd,Rcv) 
                       
 end role
 
@@ -59,16 +81,15 @@ role environment() def=
 
     local Snd, Rcv: channel(dy)
 
-    const a, b, i: agent,
-          ka, kb, ki: public_key,
+    const a, b, s, i: agent,
+          k_as, k_bs: symmetric_key,
+          ki: public_key,
           sna, snb: protocol_id
 
-    intruder_knowledge = {a,b,i,ka,kb,inv(ki)}
+    intruder_knowledge = {a,b,s,i,inv(ki)}
 
     composition
-        securityProtocol(a,b,ka,kb,Snd,Rcv) /\
-        securityProtocol(a,i,ka,ki,Snd,Rcv) /\
-        securityProtocol(i,b,ki,kb,Snd,Rcv) 
+        securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) 
 
 end role
 
