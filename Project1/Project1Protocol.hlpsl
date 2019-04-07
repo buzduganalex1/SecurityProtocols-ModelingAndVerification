@@ -93,7 +93,7 @@ role environment() def=
           ki: public_key,
           sna,snb,alice_bob_na, bob_alice_nb: protocol_id
 
-    intruder_knowledge = {a,b,s,i,k_is,inv(ki)}
+    intruder_knowledge = {a,b,s,i,k_as,k_bs,k_is,inv(ki)}
 
     composition
         securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) /\
