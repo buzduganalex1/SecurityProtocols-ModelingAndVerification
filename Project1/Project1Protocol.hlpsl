@@ -24,11 +24,12 @@ played_by A def=
             =|> State':=2 /\ Snd({K_AB'.A}_K_BS)
                           /\ Na':=new() 
                           /\ Snd({Na'.A}_K_AB')
-                          /\ witness(A,B,sna,Na')
-                          
+                          /\ witness(A,B,alice_bob_na,Na')
+                          /\ secret(Na', sna, {A,B})
+
         3. State=2 /\ Rcv({Nb'.B}_K_AB')
-            =|> State':=3 /\ request (A,B,snb,Nb')
-                          /\ wrequest (A,B,snb,Nb')
+            =|> State':=3 /\ request (A,B,bob_alice_nb,Nb')
+                          /\ wrequest (A,B,bob_alice_nb,Nb')
 end role
 
 role bob (B,A: agent,
@@ -50,9 +51,10 @@ played_by B def=
         2. State=1 /\ Rcv({Na'.A}_K_AB')    
             =|> State':=2  /\ Nb':=new()
                            /\ Snd({Nb'.B}_K_AB')
-                           /\ witness(B,A,snb,Nb')
-                           /\ request (B,A,sna,Na')
-                           /\ wrequest (B,A,sna,Na')
+                           /\ witness(B,A,bob_alice_nb,Nb')
+                           /\ request (B,A,alice_bob_na,Na')
+                           /\ wrequest (B,A,alice_bob_na,Na')
+                           /\ secret(Nb', snb, {A,B})
 
 end role
 
@@ -89,7 +91,7 @@ role environment() def=
     const a, b, s, i: agent,
           k_as, k_bs, k_is: symmetric_key,
           ki: public_key,
-          sna, snb: protocol_id
+          sna,snb,alice_bob_na, bob_alice_nb: protocol_id
 
     intruder_knowledge = {a,b,s,i,k_is,inv(ki)}
 
@@ -101,8 +103,9 @@ role environment() def=
 end role
 
 goal
-    authentication_on sna,snb
-    weak_authentication_on sna,snb
+    authentication_on alice_bob_na,bob_alice_nb
+    weak_authentication_on alice_bob_na,bob_alice_nb
+    secrecy_of sna,snb
 end goal
 
 environment()
