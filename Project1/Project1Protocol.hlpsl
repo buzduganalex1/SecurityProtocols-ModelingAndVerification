@@ -22,11 +22,13 @@ played_by A def=
         
         2. State=1 /\ Rcv({K_AB'.B.{K_AB'.A}_K_BS}_K_AS)
             =|> State':=2 /\ Snd({K_AB'.A}_K_BS)
-                          /\ Na':=new()
+                          /\ Na':=new() 
                           /\ Snd({Na'.A}_K_AB')
-        
+                          /\ witness(A,B,sna,Na')
+                          
         3. State=2 /\ Rcv({Nb'.B}_K_AB')
-            =|> State':=3 
+            =|> State':=3 /\ request (A,B,snb,Nb')
+                          /\ wrequest (A,B,snb,Nb')
 end role
 
 role bob (B,A: agent,
@@ -45,10 +47,13 @@ played_by B def=
         1. State=0 /\ Rcv({K_AB'.A}_K_BS)
             =|> State':=1 
             
-        2. State=1 /\ Rcv({Na'.A}_K_AB')
+        2. State=1 /\ Rcv({Na'.A}_K_AB')    
             =|> State':=2  /\ Nb':=new()
                            /\ Snd({Nb'.B}_K_AB')
-                           
+                           /\ witness(B,A,snb,Nb')
+                           /\ request (B,A,sna,Na')
+                           /\ wrequest (B,A,sna,Na')
+
 end role
 
 role server (S: agent,
@@ -82,19 +87,22 @@ role environment() def=
     local Snd, Rcv: channel(dy)
 
     const a, b, s, i: agent,
-          k_as, k_bs: symmetric_key,
+          k_as, k_bs, k_is: symmetric_key,
           ki: public_key,
           sna, snb: protocol_id
 
-    intruder_knowledge = {a,b,s,i,inv(ki)}
+    intruder_knowledge = {a,b,s,i,k_is,inv(ki)}
 
     composition
-        securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) 
+        securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) /\
+        securityProtocol(a,i,s,k_as,k_is,Snd,Rcv) /\    
+        securityProtocol(i,b,s,k_is,k_bs,Snd,Rcv) 
 
 end role
 
 goal
-    % authentication_on sna
+    authentication_on sna,snb
+    weak_authentication_on sna,snb
 end goal
 
 environment()
