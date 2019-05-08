@@ -30,10 +30,11 @@ played_by A def=
 
         4. State=3 /\ Rcv(B)
             =|> State':=4 /\ Na':=new() 
-                          /\ Snd({Na'.A}_K_AB)    
+                          /\ Snd({Na'.A}_K_AB)   
+                          /\ witness(A,B,alice_bob_na,Na')   
 
         5. State=4 /\ Rcv({Nb'.B}_K_AB)
-            =|> State':=5
+            =|> State':=5 /\ wrequest(A,B,bob_alice_nb, Nb')
 end role
 
 role bob (B,A,S: agent,
@@ -56,10 +57,11 @@ played_by B def=
         2. State=1 /\ Rcv({K_AB'.A'.Nb'}_K_BS) 
             =|> State':=2 /\ Snd(B)
             
-        3. State=2 /\ Rcv({Na'.A}_K_AB)
-                           
+        3. State=2 /\ Rcv({Na'.A}_K_AB)                
             =|> State':=3 /\ Nb':=new() 
-                          /\ Snd({Nb'.B}_K_AB)
+                          /\ Snd({Nb'.B}_K_AB)  
+                          /\ wrequest(B,A,alice_bob_na,Na')
+                          /\ witness(B,A,bob_alice_nb,Nb') 
 end role
 
 role server (S: agent,
@@ -103,14 +105,15 @@ role environment() def=
 
     composition
         securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) /\
-        securityProtocol(i,b,s,k_is,k_bs,Snd,Rcv) /\
+        % securityProtocol(i,b,s,k_is,k_bs,Snd,Rcv) /\
         securityProtocol(a,i,s,k_as,k_is,Snd,Rcv) 
 
 end role
 
 goal
-    authentication_on alice_bob_na,bob_alice_nb
-    weak_authentication_on alice_bob_na,bob_alice_nb
+    % weak_authentication_on alice_bob_na
+    % works like this
+    weak_authentication_on bob_alice_nb
     secrecy_of skab
 end goal
 
