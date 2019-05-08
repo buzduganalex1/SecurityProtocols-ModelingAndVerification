@@ -1,5 +1,3 @@
-%Fixed NSPK Protocol implemented with the xor operator
-
 role alice (A,B : agent, 
             Ka,Kb : public_key,  
             Snd,Rcv : channel (dy)) played_by A def=
@@ -13,8 +11,8 @@ role alice (A,B : agent,
   transition 
     1. State=0 /\ Rcv(start) 
 	  =|> State':=1 /\ Na':=new() /\ Snd({Na'.A}_Kb)
-                  /\ witness(A,B,bob_alice_na,Na') 
-                  /\ secret(Na',sna,{A,B})
+                    /\ witness(A,B,bob_alice_na,Na') 
+                    /\ secret(Na',sna,{A,B})
 
     2. State=1  /\ Rcv({Nb'.xor(Na,B)}_Ka) 
 	  =|> State':=2 /\ Snd({Nb'}_Kb)
@@ -48,8 +46,6 @@ role bob (B,A : agent,
       
 
 end role
-
-
 
 role fixednspkxor (A,B: agent,
                    Ka, Kb: public_key, 

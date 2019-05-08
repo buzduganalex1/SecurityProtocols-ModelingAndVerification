@@ -21,21 +21,19 @@ played_by A def=
         1. State=0 /\ Rcv(start)
             =|> State':=1 /\ Snd(A)
 
-        2. State=1 /\ Rcv({A.Nb'}_K_BS)
+        2. State=1 /\ Rcv({A.Nb'}_K_BS')
             =|> State':=2 /\ Na':=new() 
-                          /\ Snd({A.B.Na'.{A.Nb'}_K_BS}_K_AS)
-                          /\ secret(Na', sna,{A,S})
+                          /\ Snd({A.B.Na'.{A.Nb'}_K_BS'}_K_AS)
 
-        3. State=2 /\ Rcv({K_AB'.Na.B.{K_AB'.A.Nb'}_K_BS}_K_AS)
-            =|> State':=3 /\ Snd({K_AB'.A.Nb'}_K_BS)
-                          /\ Na':=new() 
-                          /\ Snd({Na'.A}_K_AB')
-                          /\ witness(A,B,alice_bob_na,Na')
-                          /\ secret(Na', sna, {A,B})
+        3. State=2 /\ Rcv({K_AB'.Na.B.{K_AB'.A.Nb}_K_BS}_K_AS)
+            =|> State':=3 /\ Snd({K_AB.A.Nb}_K_BS)
 
-        4. State=3 /\ Rcv({Nb'.B}_K_AB')
-            =|> State':=4 /\ request (A,B,bob_alice_nb,Nb')
-                          /\ wrequest (A,B,bob_alice_nb,Nb')
+        4. State=3 /\ Rcv(B)
+            =|> State':=4 /\ Na':=new() 
+                          /\ Snd({Na'.A}_K_AB)    
+
+        5. State=4 /\ Rcv({Nb'.B}_K_AB)
+            =|> State':=5
 end role
 
 role bob (B,A,S: agent,
@@ -51,21 +49,17 @@ played_by B def=
     init State:=0
 
     transition
-        1. State=0 /\ Rcv(A)
+        1. State=0 /\ Rcv(A')
             =|> State':=1 /\ Nb':=new()
                           /\ Snd({A.Nb'}_K_BS)
 
-        2. State=1 /\ Rcv({K_AB'.A}_K_BS)
-            =|> State':=2 
+        2. State=1 /\ Rcv({K_AB'.A'.Nb'}_K_BS) 
+            =|> State':=2 /\ Snd(B)
             
-        3. State=2 /\ Rcv({Na'.A}_K_AB')    
-            =|> State':=3  /\ Nb':=new()
-                           /\ Snd({Nb'.B}_K_AB')
-                           /\ witness(B,A,bob_alice_nb,Nb')
-                           /\ request (B,A,alice_bob_na,Na')
-                           /\ wrequest (B,A,alice_bob_na,Na')
-                           /\ secret(Nb', snb, {A,B})
-
+        3. State=2 /\ Rcv({Na'.A}_K_AB)
+                           
+            =|> State':=3 /\ Nb':=new() 
+                          /\ Snd({Nb'.B}_K_AB)
 end role
 
 role server (S: agent,
@@ -79,8 +73,8 @@ played_by S def=
           K_AB : symmetric_key
 
     transition
-     1. Rcv({A.B.Na'.{A.Nb'}_K_BS}_K_AS)
-        =|> K_AB':=new() /\ Snd({K_AB'.Na'.B.{K_AB'.A.Nb'}_K_BS}_K_AS)
+     1. Rcv({A'.B'.Na'.{A'.Nb'}_K_BS'}_K_AS)
+        =|> K_AB':=new() /\ Snd({K_AB'.Na.B.{K_AB'.A.Nb}_K_BS}_K_AS)
                          /\ secret(K_AB', skab, {A,B,S})
         
 end role
@@ -91,6 +85,7 @@ role securityProtocol(A,B,S: agent,
     
     composition
         alice(A,B,S,K_AS,Snd,Rcv) /\
+        server(S,K_AS,K_BS,Snd,Rcv) /\
         bob(B,A,S,K_BS,Snd,Rcv) 
                       
 end role
@@ -107,7 +102,6 @@ role environment() def=
     intruder_knowledge = {a,b,s,i,k_is,inv(ki)}
 
     composition
-        server(s,k_as,k_bs,Snd,Rcv) /\
         securityProtocol(a,b,s,k_as,k_bs,Snd,Rcv) /\
         securityProtocol(i,b,s,k_is,k_bs,Snd,Rcv) /\
         securityProtocol(a,i,s,k_as,k_is,Snd,Rcv) 
@@ -117,7 +111,7 @@ end role
 goal
     authentication_on alice_bob_na,bob_alice_nb
     weak_authentication_on alice_bob_na,bob_alice_nb
-    secrecy_of sna,snb,skab
+    secrecy_of skab
 end goal
 
 environment()
