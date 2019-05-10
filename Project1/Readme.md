@@ -69,6 +69,19 @@ Third attemp : Adding a nounce
 
 This version stops the replay attack since the attacker has to know the Nb' nounce.
 
+# Security Properties
+
+- The protocol satisfies weak authentication from b to a
+<img src="Resources/bob_alice_nb.PNG">
+
+- The protocol satisfies secrecy of the session key for a and b
+
+<img src="Resources/SecretSkab.PNG">
+
+- Protocol is unsafe in some cases.
+
+<img src="Resources/Unsafe_alice_bob.PNG">
+
 ## Referecens
 
 http://www.cs.cmu.edu/~dga/15-712/F07/papers/Burrows90.pdf 

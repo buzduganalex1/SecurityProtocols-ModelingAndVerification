@@ -111,9 +111,9 @@ role environment() def=
 end role
 
 goal
-    % weak_authentication_on alice_bob_na
+    %weak_authentication_on alice_bob_na
     % works like this
-    weak_authentication_on bob_alice_nb
+    %weak_authentication_on bob_alice_nb
     secrecy_of skab
 end goal
 
