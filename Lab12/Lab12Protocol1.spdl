@@ -1,0 +1,48 @@
+/* 
+ * Needham-Schroeder protocol
+ */
+
+// The protocol description
+usertype SessionKey;
+hashfunction hash;
+
+protocol Lab12Protocol(A,B)
+{
+	role A
+	{
+		fresh na: Nonce;
+		var nb: Nonce;
+		var Kab : SessionKey;
+
+		send_1(A,B, {A,B,na}pk(B) );
+		recv_2(B,A, hash(Kab,na,B), {nb,Kab}pk(A));
+		send_3(A,B, {nb}pk(Kab));
+
+		claim_a1(A,Secret,Kab);
+		claim_a2(A,Secret,nb);
+		claim_a3(A,Niagree);
+		claim_a4(A,Nisynch);
+	}	
+	
+	role B
+	{
+		var na: Nonce;
+		fresh nb:Nonce;
+		fresh Kab : SessionKey;
+
+		recv_1(A,B, {A,B,na}pk(B));
+		send_2(B,A, hash(Kab,na,B),{nb,Kab}pk(A));
+		recv_3(A,B, {nb}pk(Kab));
+
+		claim_b1(B,Secret,Kab);
+		claim_b2(B,Secret,nb);
+		claim_b3(B,Niagree);
+		claim_b4(B,Nisynch);
+	}
+}
+
+//1. Removed unused Na at the final step
+//2. Removed not needed hash at final step
+//3. Use Kab for communication
+//4. We don't need to encrypt the hash, we can send it in a different message
+//5. Check if the nb nounce is secret
